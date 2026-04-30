@@ -1,0 +1,154 @@
+<mxfile host="app.diagrams.net" modified="2026-01-15T10:00:00.000Z" agent="Mozilla/5.0" version="22.1.16" type="device">
+  <diagram name="Centralized Egress Inspection" id="egress-inspection-arch">
+    <mxGraphModel dx="1422" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="AWS Centralized Egress Inspection&#xa;Hub-and-Spoke with Transit Gateway + Network Firewall" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="1200" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- AWS Cloud boundary -->
+        <mxCell id="aws-cloud" value="AWS Cloud" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=14;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="1440" height="980" as="geometry" />
+        </mxCell>
+
+        <!-- Spoke VPC A -->
+        <mxCell id="spoke-a" value="Spoke VPC A&#xa;10.20.0.0/16" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#248814;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#248814;dashed=0;" vertex="1" parent="aws-cloud">
+          <mxGeometry x="40" y="100" width="280" height="320" as="geometry" />
+        </mxCell>
+
+        <!-- Spoke A workload -->
+        <mxCell id="spoke-a-ec2" value="Workload&#xa;EC2 / EKS / Lambda" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;" vertex="1" parent="spoke-a">
+          <mxGeometry x="100" y="80" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Spoke A TGW attachment -->
+        <mxCell id="spoke-a-tgw-attach" value="TGW Attachment&#xa;(2 AZs)" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.transit_gateway_attachment;" vertex="1" parent="spoke-a">
+          <mxGeometry x="100" y="220" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Spoke VPC B -->
+        <mxCell id="spoke-b" value="Spoke VPC B&#xa;10.30.0.0/16" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#248814;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#248814;dashed=0;" vertex="1" parent="aws-cloud">
+          <mxGeometry x="40" y="500" width="280" height="320" as="geometry" />
+        </mxCell>
+
+        <mxCell id="spoke-b-ec2" value="Workload&#xa;EC2 / EKS / Lambda" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;" vertex="1" parent="spoke-b">
+          <mxGeometry x="100" y="80" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <mxCell id="spoke-b-tgw-attach" value="TGW Attachment&#xa;(2 AZs)" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.transit_gateway_attachment;" vertex="1" parent="spoke-b">
+          <mxGeometry x="100" y="220" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Transit Gateway -->
+        <mxCell id="tgw" value="Transit Gateway" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.transit_gateway;" vertex="1" parent="aws-cloud">
+          <mxGeometry x="430" y="430" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- TGW Route Tables annotation -->
+        <mxCell id="tgw-rt-note" value="Route Tables:&#xa;• tgw-rt-spokes ─→ inspection&#xa;• tgw-rt-inspection ─→ spokes" style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;fillColor=#F2F0EC;strokeColor=#8C4FFF;fontColor=#232F3E;align=left;" vertex="1" parent="aws-cloud">
+          <mxGeometry x="380" y="540" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Inspection VPC -->
+        <mxCell id="inspection-vpc" value="Inspection VPC&#xa;100.64.0.0/16" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#C7131F;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#C7131F;dashed=0;" vertex="1" parent="aws-cloud">
+          <mxGeometry x="620" y="100" width="500" height="800" as="geometry" />
+        </mxCell>
+
+        <!-- TGW Attach subnets -->
+        <mxCell id="insp-tgw-attach" value="TGW-Attach Subnets&#xa;(per AZ)" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.transit_gateway_attachment;" vertex="1" parent="inspection-vpc">
+          <mxGeometry x="40" y="370" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Network Firewall -->
+        <mxCell id="nfw" value="AWS Network Firewall&#xa;(Stateless + Stateful)" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C7131F;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;" vertex="1" parent="inspection-vpc">
+          <mxGeometry x="200" y="370" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Firewall subnets label -->
+        <mxCell id="fw-subnets-label" value="Firewall Subnets (per AZ)&#xa;NFW Endpoints" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#C7131F;" vertex="1" parent="inspection-vpc">
+          <mxGeometry x="180" y="320" width="120" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- NAT Gateway -->
+        <mxCell id="nat-gw" value="NAT Gateway&#xa;(per AZ)" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.nat_gateway;" vertex="1" parent="inspection-vpc">
+          <mxGeometry x="350" y="370" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Internet Gateway -->
+        <mxCell id="igw" value="Internet&#xa;Gateway" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.internet_gateway;" vertex="1" parent="inspection-vpc">
+          <mxGeometry x="200" y="650" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Critical ordering note -->
+        <mxCell id="ordering-note" value="Critical: Firewall BEFORE NAT&#xa;preserves original src IPs for inspection" style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;fillColor=#FFF8DC;strokeColor=#C7131F;fontColor=#C7131F;fontStyle=1;align=center;" vertex="1" parent="inspection-vpc">
+          <mxGeometry x="180" y="490" width="240" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- CloudWatch Logs -->
+        <mxCell id="cw-logs" value="CloudWatch Logs&#xa;Alert + Flow" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch_2;" vertex="1" parent="inspection-vpc">
+          <mxGeometry x="350" y="200" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Internet (outside VPC) -->
+        <mxCell id="internet" value="Internet" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.internet_alt1;" vertex="1" parent="aws-cloud">
+          <mxGeometry x="1230" y="500" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Flow arrows -->
+        <!-- Spoke A → TGW -->
+        <mxCell id="arrow-a-tgw" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#1BA1E2;strokeWidth=2;fontSize=10;" edge="1" parent="aws-cloud" source="spoke-a-tgw-attach" target="tgw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Spoke B → TGW -->
+        <mxCell id="arrow-b-tgw" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#1BA1E2;strokeWidth=2;fontSize=10;" edge="1" parent="aws-cloud" source="spoke-b-tgw-attach" target="tgw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- TGW → Inspection -->
+        <mxCell id="arrow-tgw-insp" value="0.0.0.0/0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#1BA1E2;strokeWidth=2;fontSize=10;fontStyle=1;" edge="1" parent="aws-cloud" source="tgw" target="insp-tgw-attach">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="610" y="469" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Inspection TGW → NFW -->
+        <mxCell id="arrow-insp-nfw" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#C7131F;strokeWidth=3;fontSize=10;" edge="1" parent="inspection-vpc" source="insp-tgw-attach" target="nfw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- NFW → NAT -->
+        <mxCell id="arrow-nfw-nat" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#1BA1E2;strokeWidth=2;fontSize=10;" edge="1" parent="inspection-vpc" source="nfw" target="nat-gw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- NAT → IGW -->
+        <mxCell id="arrow-nat-igw" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#1BA1E2;strokeWidth=2;fontSize=10;" edge="1" parent="inspection-vpc" source="nat-gw" target="igw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- IGW → Internet -->
+        <mxCell id="arrow-igw-internet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#1BA1E2;strokeWidth=2;fontSize=10;" edge="1" parent="aws-cloud" source="igw" target="internet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- NFW → CloudWatch Logs -->
+        <mxCell id="arrow-nfw-cw" value="logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#E7157B;strokeWidth=1;fontSize=9;dashed=1;" edge="1" parent="inspection-vpc" source="nfw" target="cw-logs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend" value="Traffic Flow:&#xa;Spoke → TGW → Inspection VPC (TGW Attach) → NFW → NAT → IGW → Internet" style="rounded=0;whiteSpace=wrap;html=1;fontSize=11;fillColor=#E6F2FB;strokeColor=#1BA1E2;fontColor=#232F3E;align=left;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="180" y="1010" width="700" height="40" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,30 @@
+aws_region  = "eu-west-1"
+project     = "egress-inspection"
+environment = "dev"
+owner       = "security-platform"
+
+availability_zones = ["eu-west-1a", "eu-west-1b"]
+
+inspection_vpc_cidr = "100.64.0.0/16"
+
+spoke_vpcs = {
+  "spoke-app-a" = { cidr = "10.20.0.0/16" }
+  "spoke-app-b" = { cidr = "10.30.0.0/16" }
+}
+
+log_retention_days = 90
+
+# Set to true and supply a CA cert ARN to enable TLS inspection.
+# Read ARCHITECTURE.md for operational implications before enabling.
+enable_tls_inspection          = false
+tls_inspection_certificate_arn = ""
+
+allowed_egress_domains = [
+  ".amazonaws.com",
+  ".amazon.com",
+  ".github.com",
+  ".docker.io",
+  ".pypi.org",
+  ".pythonhosted.org",
+  ".ubuntu.com",
+]

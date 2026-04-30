@@ -1,0 +1,58 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+
+# Sensitive variable files
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+!*.auto.tfvars.example
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI config
+.terraformrc
+terraform.rc
+
+# Lock files (commit root, ignore module-level if reused)
+# .terraform.lock.hcl
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# OS
+Thumbs.db
+desktop.ini
+
+# Secrets / credentials
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+aws-credentials
+.aws/
+
+# Build artifacts
+dist/
+build/
+node_modules/
+
+# Logs
+*.log
+
+# Test artifacts
+/tests/.terratest/

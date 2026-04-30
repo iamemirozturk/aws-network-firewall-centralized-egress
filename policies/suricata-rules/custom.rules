@@ -1,0 +1,87 @@
+# =============================================================================
+# Custom Suricata Rules for AWS Network Firewall (STRICT_ORDER mode)
+# =============================================================================
+# Rule numbering convention:
+#   1000xxx — Reconnaissance / scanning
+#   2000xxx — C2 / malware patterns
+#   3000xxx — High-risk file downloads
+#   4000xxx — Data exfiltration patterns
+#   5000xxx — Compliance / policy denials
+#   6000xxx — DNS-based threats
+# =============================================================================
+
+# -------------------------------------------------------------
+# 1. Reconnaissance and scanning
+# -------------------------------------------------------------
+
+drop tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Outbound port scan to multiple destinations"; flags:S; threshold:type both, track by_src, count 30, seconds 60; classtype:attempted-recon; sid:1000001; rev:1;)
+
+# -------------------------------------------------------------
+# 2. C2 / malware traffic
+# -------------------------------------------------------------
+
+# Block well-known DGA TLDs (typical for malware C2)
+drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Suspicious TLD .top"; tls.sni; content:".top"; endswith; nocase; classtype:trojan-activity; sid:2000001; rev:1;)
+drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Suspicious TLD .xyz"; tls.sni; content:".xyz"; endswith; nocase; classtype:trojan-activity; sid:2000002; rev:1;)
+drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Suspicious TLD .tk"; tls.sni; content:".tk"; endswith; nocase; classtype:trojan-activity; sid:2000003; rev:1;)
+drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Suspicious TLD .click"; tls.sni; content:".click"; endswith; nocase; classtype:trojan-activity; sid:2000004; rev:1;)
+
+# Block direct-to-IP HTTPS (no SNI) — strong C2 indicator
+drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS HTTPS without SNI - possible C2"; tls.sni; content:!""; classtype:trojan-activity; sid:2000010; rev:1;)
+
+# -------------------------------------------------------------
+# 3. High-risk file downloads
+# -------------------------------------------------------------
+
+drop http $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Executable download over HTTP (.exe)"; flow:to_server,established; http.uri; content:".exe"; endswith; nocase; classtype:policy-violation; sid:3000001; rev:1;)
+drop http $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS DLL download over HTTP"; flow:to_server,established; http.uri; content:".dll"; endswith; nocase; classtype:policy-violation; sid:3000002; rev:1;)
+drop http $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS PowerShell script download over HTTP"; flow:to_server,established; http.uri; content:".ps1"; endswith; nocase; classtype:policy-violation; sid:3000003; rev:1;)
+drop http $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Batch file download over HTTP"; flow:to_server,established; http.uri; content:".bat"; endswith; nocase; classtype:policy-violation; sid:3000004; rev:1;)
+
+# -------------------------------------------------------------
+# 4. Data exfiltration patterns
+# -------------------------------------------------------------
+
+# DNS tunneling — abnormally long DNS query
+drop dns $HOME_NET any -> $EXTERNAL_NET 53 (msg:"EGRESS Abnormally long DNS query - possible tunneling"; dns.query; pcre:"/^[a-zA-Z0-9]{50,}\./"; classtype:policy-violation; sid:4000001; rev:1;)
+
+# DNS over HTTPS (DoH) to known providers — bypasses local DNS controls
+drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS DNS over HTTPS - dns.google"; tls.sni; content:"dns.google"; classtype:policy-violation; sid:4000010; rev:1;)
+drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS DNS over HTTPS - cloudflare-dns.com"; tls.sni; content:"cloudflare-dns.com"; classtype:policy-violation; sid:4000011; rev:1;)
+drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS DNS over HTTPS - mozilla.cloudflare-dns.com"; tls.sni; content:"mozilla.cloudflare-dns.com"; classtype:policy-violation; sid:4000012; rev:1;)
+
+# ICMP tunneling (large payloads)
+drop icmp $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Large ICMP payload - possible tunneling"; dsize:>1024; classtype:policy-violation; sid:4000020; rev:1;)
+
+# -------------------------------------------------------------
+# 5. Compliance / policy denials
+# -------------------------------------------------------------
+
+# Block Tor entry nodes (FQDN-based — IP-based handled in stateless rules / SCP)
+drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Tor exit list domain"; tls.sni; content:"torproject.org"; classtype:policy-violation; sid:5000001; rev:1;)
+
+# Block public file-share services (common exfiltration channels)
+drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS Unauthorized file share - transfer.sh"; tls.sni; content:"transfer.sh"; classtype:policy-violation; sid:5000010; rev:1;)
+drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS Unauthorized file share - file.io"; tls.sni; content:"file.io"; classtype:policy-violation; sid:5000011; rev:1;)
+drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS Unauthorized file share - anonfiles"; tls.sni; content:"anonfiles"; classtype:policy-violation; sid:5000012; rev:1;)
+
+# Block pastebin services
+drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS Pastebin service - pastebin.com"; tls.sni; content:"pastebin.com"; classtype:policy-violation; sid:5000020; rev:1;)
+drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS Pastebin service - hastebin.com"; tls.sni; content:"hastebin.com"; classtype:policy-violation; sid:5000021; rev:1;)
+
+# -------------------------------------------------------------
+# 6. DNS-based threats
+# -------------------------------------------------------------
+
+# Alert (not drop) on newly-registered domain patterns — pair with downstream NRD feed
+alert dns $HOME_NET any -> $EXTERNAL_NET 53 (msg:"EGRESS DNS query to potential DGA pattern"; dns.query; pcre:"/^[a-z0-9]{16,}\.(com|net|org)$/"; classtype:trojan-activity; sid:6000001; rev:1;)
+
+# =============================================================================
+# Notes for operators
+# =============================================================================
+# * $HOME_NET is configured at the firewall policy level (typically your
+#   spoke aggregate CIDR block, e.g., 10.0.0.0/8).
+# * Rules use STRICT_ORDER — first match wins. Rule order matters.
+# * Test new rules in `alert` mode first, then promote to `drop` after baselining.
+# * For reproducible deploys, version this file (e.g., custom.rules.v1.2)
+#   and pin via a checksum in your CI pipeline.
