@@ -124,8 +124,6 @@ By deploying and studying this repo, you'll get hands-on with:
 ├── .github/workflows/             # CI: plan, security scan, lint
 ├── diagrams/                      # draw.io sources + exported PNG/SVG
 │   ├── architecture.drawio
-│   ├── traffic-flow.drawio
-│   └── threat-model.drawio
 ├── terraform/
 │   ├── main.tf                    # Root composition
 │   ├── variables.tf
@@ -168,7 +166,7 @@ By deploying and studying this repo, you'll get hands-on with:
 
 ```bash
 # 1. Clone and enter
-git clone https://github.com/<you>/aws-centralized-egress-inspection.git
+git clone https://github.com/iamemirozturk/aws-centralized-egress-inspection.git
 cd aws-centralized-egress-inspection/terraform
 
 # 2. Configure variables
