@@ -54,7 +54,7 @@ A centralized inspection VPC, fronted by AWS Network Firewall and aggregated via
 
 ![Centralized Egress Inspection Architecture](diagrams/architecture.png)
 
-> 📐 The editable diagram source is in [`diagrams/architecture.drawio`](diagrams/architecture.drawio). Open it in [draw.io](https://app.diagrams.net/) or VS Code with the Draw.io Integration extension.
+> The editable diagram source is in [`diagrams/architecture.drawio`](diagrams/architecture.drawio). Open it in [draw.io](https://app.diagrams.net/) or VS Code with the Draw.io Integration extension.
 
 ### Traffic Flow
 
