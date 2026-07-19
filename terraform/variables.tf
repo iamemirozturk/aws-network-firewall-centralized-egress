@@ -89,3 +89,13 @@ variable "allowed_egress_domains" {
     error_message = "Provide at least one explicitly approved egress domain."
   }
 }
+
+check "tls_certificate_required" {
+  assert {
+    condition = (
+      !var.enable_tls_inspection ||
+      trimspace(nonsensitive(var.tls_inspection_certificate_arn)) != ""
+    )
+    error_message = "tls_inspection_certificate_arn must be set when enable_tls_inspection is true."
+  }
+}

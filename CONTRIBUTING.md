@@ -43,7 +43,7 @@ docs(readme): clarify NAT placement rationale
 ## Code style
 
 - Terraform: `terraform fmt`-clean, no unused variables, all variables typed and described
-- Bash: `set -euo pipefail` at top of every script; `shellcheck`-clean
+- Bash: use `set -euo pipefail` when immediate exit is intended; validation aggregators may deliberately omit `-e` so they can report all failures. All scripts must be `shellcheck`-clean.
 - YAML: 2-space indent
 
 ## Licensing
