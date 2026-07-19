@@ -46,7 +46,9 @@ Complete `validation.md`, capture sanitized evidence, and then destroy the lab w
 
 ```bash
 terraform plan -destroy
-terraform destroy
+terraform apply -var='enable_firewall_protections=false'
+cd ..
+TF_VAR_enable_firewall_protections=false ./scripts/destroy.sh
 ```
 
-Firewall protections are enabled by default, so cleanup requires a separate, explicitly reviewed configuration change that sets `enable_firewall_protections = false` before destruction. Re-enable the setting for any subsequent deployment.
+The separate apply disables Network Firewall deletion and configuration-change protections. Review that plan carefully and use it only for an authorized cleanup. The cleanup script requires an explicit environment acknowledgement, displays the AWS account and Terraform workspace, creates a saved destroy plan, and requires an exact confirmation phrase. It never disables protections automatically.

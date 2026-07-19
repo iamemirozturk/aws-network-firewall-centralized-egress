@@ -113,12 +113,12 @@ See [`docs/limitations.md`](docs/limitations.md) for the full discussion.
 ```bash
 cd terraform
 terraform plan -destroy
-terraform destroy
+terraform apply -var='enable_firewall_protections=false'
+cd ..
+TF_VAR_enable_firewall_protections=false ./scripts/destroy.sh
 ```
 
-Confirm the target AWS account and workspace before approving destruction.
-
-Firewall protections are enabled by default. Before cleanup, make a separate, explicitly reviewed configuration change setting `enable_firewall_protections = false`; do not automate that security-weakening step.
+Confirm the target AWS account and workspace before approving destruction. The separate apply deliberately disables Network Firewall protection and must be reviewed before running the cleanup script. The script will not disable protection automatically.
 
 ## Contributing and security
 

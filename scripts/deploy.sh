@@ -39,4 +39,4 @@ rm -f tfplan
 
 echo
 echo "[✓] Deployment complete."
-echo "[i] To validate, run: ./scripts/test-egress.sh"
+echo "[i] From an authorized spoke workload, run: ${REPO_ROOT}/scripts/test-egress.sh"

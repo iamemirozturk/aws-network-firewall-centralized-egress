@@ -11,7 +11,7 @@ repos:
         args:
           - --args=--quiet
           - --args=--skip-check CKV_AWS_111  # IAM wildcard - reviewed
-      - id: terraform_tfsec
+      - id: terraform_trivy
       - id: terraform_docs
         args:
           - --hook-config=--path-to-file=README.md
