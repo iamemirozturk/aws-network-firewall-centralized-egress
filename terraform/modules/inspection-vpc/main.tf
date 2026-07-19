@@ -18,6 +18,11 @@ variable "transit_gateway_id" {
   description = "Transit Gateway ID to attach to."
 }
 
+variable "log_retention_days" {
+  type        = number
+  description = "Retention period for inspection VPC flow logs."
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to all resources."
@@ -42,6 +47,11 @@ resource "aws_vpc" "this" {
   tags = merge(var.tags, { Name = "${var.name_prefix}-inspection-vpc" })
 }
 
+resource "aws_default_security_group" "this" {
+  vpc_id = aws_vpc.this.id
+  tags   = merge(var.tags, { Name = "${var.name_prefix}-inspection-default-deny" })
+}
+
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
   tags   = merge(var.tags, { Name = "${var.name_prefix}-igw" })
@@ -54,9 +64,10 @@ resource "aws_internet_gateway" "this" {
 resource "aws_subnet" "tgw_attach" {
   for_each = { for idx, az in var.availability_zones : az => idx }
 
-  vpc_id            = aws_vpc.this.id
-  cidr_block        = local.tgw_attach_cidrs[each.value]
-  availability_zone = each.key
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = local.tgw_attach_cidrs[each.value]
+  availability_zone       = each.key
+  map_public_ip_on_launch = false
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-tgw-attach-${each.key}"
@@ -67,9 +78,10 @@ resource "aws_subnet" "tgw_attach" {
 resource "aws_subnet" "firewall" {
   for_each = { for idx, az in var.availability_zones : az => idx }
 
-  vpc_id            = aws_vpc.this.id
-  cidr_block        = local.firewall_cidrs[each.value]
-  availability_zone = each.key
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = local.firewall_cidrs[each.value]
+  availability_zone       = each.key
+  map_public_ip_on_launch = false
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-firewall-${each.key}"
@@ -80,9 +92,10 @@ resource "aws_subnet" "firewall" {
 resource "aws_subnet" "nat" {
   for_each = { for idx, az in var.availability_zones : az => idx }
 
-  vpc_id            = aws_vpc.this.id
-  cidr_block        = local.nat_cidrs[each.value]
-  availability_zone = each.key
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = local.nat_cidrs[each.value]
+  availability_zone       = each.key
+  map_public_ip_on_launch = false
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-nat-${each.key}"
@@ -95,9 +108,89 @@ resource "aws_subnet" "nat" {
 ############################
 
 resource "aws_eip" "nat" {
+  # checkov:skip=CKV2_AWS_19:The EIP is attached to an aws_nat_gateway through allocation_id; the check only recognizes EC2 instance associations.
   for_each = toset(var.availability_zones)
   domain   = "vpc"
   tags     = merge(var.tags, { Name = "${var.name_prefix}-nat-eip-${each.key}" })
+}
+
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+resource "aws_kms_key" "flow_logs" {
+  description             = "KMS key for inspection VPC flow logs"
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+  tags                    = merge(var.tags, { Name = "${var.name_prefix}-inspection-flow-logs" })
+}
+
+resource "aws_kms_key_policy" "flow_logs" {
+  key_id = aws_kms_key.flow_logs.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "EnableAccountAdministration"
+        Effect    = "Allow"
+        Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
+        Action    = "kms:*"
+        Resource  = "*"
+      },
+      {
+        Sid       = "AllowCloudWatchLogs"
+        Effect    = "Allow"
+        Principal = { Service = "logs.${data.aws_region.current.region}.amazonaws.com" }
+        Action    = ["kms:Encrypt*", "kms:Decrypt*", "kms:ReEncrypt*", "kms:GenerateDataKey*", "kms:Describe*"]
+        Resource  = "*"
+        Condition = {
+          ArnLike = {
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/vpc/flowlogs/${var.name_prefix}-inspection"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_cloudwatch_log_group" "flow" {
+  name              = "/aws/vpc/flowlogs/${var.name_prefix}-inspection"
+  retention_in_days = var.log_retention_days
+  kms_key_id        = aws_kms_key.flow_logs.arn
+  tags              = var.tags
+}
+
+resource "aws_iam_role" "flow_logs" {
+  name = "${var.name_prefix}-inspection-flow-logs"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "vpc-flow-logs.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "flow_logs" {
+  name = "${var.name_prefix}-inspection-flow-logs"
+  role = aws_iam_role.flow_logs.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogGroups", "logs:DescribeLogStreams"]
+      Resource = "${aws_cloudwatch_log_group.flow.arn}:*"
+    }]
+  })
+}
+
+resource "aws_flow_log" "this" {
+  iam_role_arn    = aws_iam_role.flow_logs.arn
+  log_destination = aws_cloudwatch_log_group.flow.arn
+  traffic_type    = "ALL"
+  vpc_id          = aws_vpc.this.id
+  tags            = merge(var.tags, { Name = "${var.name_prefix}-inspection-flow-log" })
 }
 
 resource "aws_nat_gateway" "this" {

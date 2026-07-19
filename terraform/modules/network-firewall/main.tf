@@ -13,11 +13,6 @@ variable "firewall_subnet_ids" {
   description = "Map of AZ → firewall subnet ID."
 }
 
-variable "availability_zones" {
-  type        = list(string)
-  description = "AZs to deploy the firewall across."
-}
-
 variable "log_retention_days" {
   type        = number
   description = "CloudWatch retention for logs."
@@ -26,6 +21,16 @@ variable "log_retention_days" {
 variable "allowed_egress_domains" {
   type        = list(string)
   description = "Domains permitted via TLS SNI / HTTP Host."
+}
+
+variable "home_net_cidrs" {
+  type        = list(string)
+  description = "Spoke CIDRs treated as HOME_NET by centralized stateful rules."
+
+  validation {
+    condition     = length(var.home_net_cidrs) > 0
+    error_message = "At least one spoke CIDR must be supplied for HOME_NET."
+  }
 }
 
 variable "enable_tls_inspection" {
@@ -37,6 +42,12 @@ variable "tls_certificate_arn" {
   type        = string
   description = "ACM ARN of the CA certificate."
   sensitive   = true
+}
+
+variable "enable_protections" {
+  type        = bool
+  description = "Enable firewall deletion and configuration-change protections."
+  default     = true
 }
 
 variable "tags" {
@@ -73,7 +84,7 @@ resource "aws_kms_key_policy" "logs" {
         Sid    = "AllowCloudWatchLogs"
         Effect = "Allow"
         Principal = {
-          Service = "logs.${data.aws_region.current.name}.amazonaws.com"
+          Service = "logs.${data.aws_region.current.region}.amazonaws.com"
         }
         Action = [
           "kms:Encrypt*",
@@ -85,7 +96,7 @@ resource "aws_kms_key_policy" "logs" {
         Resource = "*"
         Condition = {
           ArnLike = {
-            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:*"
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:*"
           }
         }
       }
@@ -122,6 +133,11 @@ resource "aws_networkfirewall_rule_group" "stateless_drops" {
   name     = "${var.name_prefix}-stateless-drops"
   capacity = 100
   type     = "STATELESS"
+
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
 
   rule_group {
     rules_source {
@@ -179,7 +195,21 @@ resource "aws_networkfirewall_rule_group" "domain_allowlist" {
   capacity = 200
   type     = "STATEFUL"
 
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
+
   rule_group {
+    rule_variables {
+      ip_sets {
+        key = "HOME_NET"
+        ip_set {
+          definition = var.home_net_cidrs
+        }
+      }
+    }
+
     stateful_rule_options {
       rule_order = "STRICT_ORDER"
     }
@@ -205,6 +235,11 @@ resource "aws_networkfirewall_rule_group" "suricata_custom" {
   capacity = 500
   type     = "STATEFUL"
 
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
+
   rule_group {
     stateful_rule_options {
       rule_order = "STRICT_ORDER"
@@ -219,27 +254,26 @@ resource "aws_networkfirewall_rule_group" "suricata_custom" {
 }
 
 ################################################################################
-# AWS-managed threat intel rule group reference
-################################################################################
-
-data "aws_networkfirewall_resource_policy" "managed_threat_intel" {
-  resource_arn = "arn:aws:network-firewall:${data.aws_region.current.name}:aws-managed:stateful-rulegroup/ThreatSignaturesEmergingEventsStrictOrder"
-}
-
-################################################################################
 # Firewall Policy — composes rule groups in deterministic order
 ################################################################################
 
 resource "aws_networkfirewall_firewall_policy" "this" {
   name = "${var.name_prefix}-policy"
 
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
+
   firewall_policy {
     stateless_default_actions          = ["aws:forward_to_sfe"]
     stateless_fragment_default_actions = ["aws:forward_to_sfe"]
 
+    # Application-layer allowlists need the TCP/TLS session to become
+    # established before an unmatched flow is dropped.
     stateful_default_actions = [
-      "aws:drop_strict",
-      "aws:alert_strict",
+      "aws:drop_established",
+      "aws:alert_established",
     ]
 
     stateful_engine_options {
@@ -253,7 +287,7 @@ resource "aws_networkfirewall_firewall_policy" "this" {
 
     stateful_rule_group_reference {
       priority     = 100
-      resource_arn = aws_networkfirewall_rule_group.domain_allowlist.arn
+      resource_arn = "arn:aws:network-firewall:${data.aws_region.current.region}:aws-managed:stateful-rulegroup/ThreatSignaturesEmergingEventsStrictOrder"
     }
 
     stateful_rule_group_reference {
@@ -263,15 +297,10 @@ resource "aws_networkfirewall_firewall_policy" "this" {
 
     stateful_rule_group_reference {
       priority     = 300
-      resource_arn = "arn:aws:network-firewall:${data.aws_region.current.name}:aws-managed:stateful-rulegroup/ThreatSignaturesEmergingEventsStrictOrder"
+      resource_arn = aws_networkfirewall_rule_group.domain_allowlist.arn
     }
 
-    dynamic "tls_inspection_configuration_arn" {
-      for_each = var.enable_tls_inspection ? [1] : []
-      content {
-        tls_inspection_configuration_arn = aws_networkfirewall_tls_inspection_configuration.this[0].arn
-      }
-    }
+    tls_inspection_configuration_arn = var.enable_tls_inspection ? aws_networkfirewall_tls_inspection_configuration.this[0].arn : null
   }
 
   tags = merge(var.tags, { Name = "${var.name_prefix}-policy" })
@@ -298,11 +327,11 @@ resource "aws_networkfirewall_tls_inspection_configuration" "this" {
           to_port   = 443
         }
 
-        destinations {
+        destination {
           address_definition = "0.0.0.0/0"
         }
 
-        sources {
+        source {
           address_definition = "0.0.0.0/0"
         }
       }
@@ -321,9 +350,14 @@ resource "aws_networkfirewall_firewall" "this" {
   vpc_id              = var.vpc_id
   firewall_policy_arn = aws_networkfirewall_firewall_policy.this.arn
 
-  delete_protection                 = false
-  firewall_policy_change_protection = false
-  subnet_change_protection          = false
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
+
+  delete_protection                 = var.enable_protections
+  firewall_policy_change_protection = var.enable_protections
+  subnet_change_protection          = var.enable_protections
 
   dynamic "subnet_mapping" {
     for_each = var.firewall_subnet_ids

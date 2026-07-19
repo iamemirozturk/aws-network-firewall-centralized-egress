@@ -21,9 +21,8 @@ locals {
 module "transit_gateway" {
   source = "./modules/transit-gateway"
 
-  name_prefix    = local.name_prefix
-  description    = "TGW for centralized egress inspection"
-  spoke_vpc_keys = keys(var.spoke_vpcs)
+  name_prefix = local.name_prefix
+  description = "TGW for centralized egress inspection"
 
   tags = local.common_tags
 }
@@ -39,6 +38,7 @@ module "inspection_vpc" {
   vpc_cidr           = var.inspection_vpc_cidr
   availability_zones = var.availability_zones
   transit_gateway_id = module.transit_gateway.transit_gateway_id
+  log_retention_days = var.log_retention_days
 
   tags = local.common_tags
 }
@@ -50,14 +50,15 @@ module "inspection_vpc" {
 module "network_firewall" {
   source = "./modules/network-firewall"
 
-  name_prefix             = local.name_prefix
-  vpc_id                  = module.inspection_vpc.vpc_id
-  firewall_subnet_ids     = module.inspection_vpc.firewall_subnet_ids
-  availability_zones      = var.availability_zones
-  log_retention_days      = var.log_retention_days
-  allowed_egress_domains  = var.allowed_egress_domains
-  enable_tls_inspection   = var.enable_tls_inspection
-  tls_certificate_arn     = var.tls_inspection_certificate_arn
+  name_prefix            = local.name_prefix
+  vpc_id                 = module.inspection_vpc.vpc_id
+  firewall_subnet_ids    = module.inspection_vpc.firewall_subnet_ids
+  log_retention_days     = var.log_retention_days
+  allowed_egress_domains = var.allowed_egress_domains
+  home_net_cidrs         = [for spoke in values(var.spoke_vpcs) : spoke.cidr]
+  enable_tls_inspection  = var.enable_tls_inspection
+  tls_certificate_arn    = var.tls_inspection_certificate_arn
+  enable_protections     = var.enable_firewall_protections
 
   tags = local.common_tags
 }
@@ -88,14 +89,14 @@ resource "aws_route" "firewall_to_nat" {
   nat_gateway_id         = module.inspection_vpc.nat_gateway_ids[each.key]
 }
 
-# Return path: NAT subnet → spoke CIDRs via TGW
-resource "aws_route" "nat_to_spokes_via_tgw" {
+# Return path, first hop: NAT subnet → same-AZ firewall endpoint.
+resource "aws_route" "nat_to_firewall_for_spokes" {
   for_each = {
     for pair in flatten([
       for az_key, az in var.availability_zones : [
         for spoke_key, spoke in var.spoke_vpcs : {
-          key       = "${az}-${spoke_key}"
-          az_key    = az
+          key        = "${az}-${spoke_key}"
+          az_key     = az
           spoke_cidr = spoke.cidr
         }
       ]
@@ -104,9 +105,28 @@ resource "aws_route" "nat_to_spokes_via_tgw" {
 
   route_table_id         = module.inspection_vpc.nat_route_table_ids[each.value.az_key]
   destination_cidr_block = each.value.spoke_cidr
+  vpc_endpoint_id        = module.network_firewall.firewall_endpoint_ids[each.value.az_key]
+}
+
+# Return path, second hop: firewall subnet → TGW.
+resource "aws_route" "firewall_to_tgw_for_spokes" {
+  for_each = {
+    for pair in flatten([
+      for az in var.availability_zones : [
+        for spoke_key, spoke in var.spoke_vpcs : {
+          key        = "${az}-${spoke_key}"
+          az_key     = az
+          spoke_cidr = spoke.cidr
+        }
+      ]
+    ]) : pair.key => pair
+  }
+
+  route_table_id         = module.inspection_vpc.firewall_route_table_ids[each.value.az_key]
+  destination_cidr_block = each.value.spoke_cidr
   transit_gateway_id     = module.transit_gateway.transit_gateway_id
 
-  depends_on = [module.transit_gateway]
+  depends_on = [module.inspection_vpc]
 }
 
 ################################################################################
@@ -122,6 +142,7 @@ module "spoke_vpcs" {
   vpc_cidr           = each.value.cidr
   availability_zones = var.availability_zones
   transit_gateway_id = module.transit_gateway.transit_gateway_id
+  log_retention_days = var.log_retention_days
 
   tags = merge(local.common_tags, { SpokeName = each.key })
 }

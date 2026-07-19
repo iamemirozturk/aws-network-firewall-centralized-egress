@@ -2,9 +2,9 @@ name: Security Scan
 
 on:
   push:
-    branches: [main]
+    branches: [aws]
   pull_request:
-    branches: [main]
+    branches: [aws]
   schedule:
     - cron: '0 6 * * 1' # Mondays 06:00 UTC
 
@@ -31,29 +31,11 @@ jobs:
           soft_fail: false
 
       - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: checkov-results.sarif
           category: checkov
-
-  tfsec:
-    name: tfsec
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run tfsec
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          sarif_file: tfsec-results.sarif
-
-      - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: tfsec-results.sarif
-          category: tfsec
 
   trivy:
     name: Trivy IaC
@@ -62,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run Trivy
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
           scan-ref: terraform/
@@ -71,7 +53,7 @@ jobs:
           severity: HIGH,CRITICAL
 
       - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-results.sarif
@@ -85,3 +67,5 @@ jobs:
         with:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

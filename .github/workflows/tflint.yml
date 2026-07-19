@@ -2,9 +2,9 @@ name: TFLint
 
 on:
   push:
-    branches: [main]
+    branches: [aws]
   pull_request:
-    branches: [main]
+    branches: [aws]
 
 jobs:
   tflint:
