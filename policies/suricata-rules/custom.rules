@@ -79,8 +79,8 @@ alert dns $HOME_NET any -> $EXTERNAL_NET 53 (msg:"EGRESS DNS query to potential 
 # =============================================================================
 # Notes for operators
 # =============================================================================
-# * $HOME_NET is configured at the firewall policy level (typically your
-#   spoke aggregate CIDR block, e.g., 10.0.0.0/8).
+# * $HOME_NET is configured in each custom stateful rule group and contains
+#   the spoke CIDRs supplied to the Terraform module.
 # * Rules use STRICT_ORDER — first match wins. Rule order matters.
 # * Test new rules in `alert` mode first, then promote to `drop` after baselining.
 # * For reproducible deploys, version this file (e.g., custom.rules.v1.2)
