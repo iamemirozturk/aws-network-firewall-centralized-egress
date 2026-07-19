@@ -12,7 +12,10 @@ spoke_vpcs = {
   "spoke-app-b" = { cidr = "10.30.0.0/16" }
 }
 
-log_retention_days = 90
+log_retention_days = 365
+
+# Keep protections enabled except during a reviewed two-step cleanup.
+enable_firewall_protections = true
 
 # Set to true and supply a CA cert ARN to enable TLS inspection.
 # Read ARCHITECTURE.md for operational implications before enabling.

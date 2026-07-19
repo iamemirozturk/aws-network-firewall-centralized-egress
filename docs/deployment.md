@@ -48,3 +48,5 @@ Complete `validation.md`, capture sanitized evidence, and then destroy the lab w
 terraform plan -destroy
 terraform destroy
 ```
+
+Firewall protections are enabled by default, so cleanup requires a separate, explicitly reviewed configuration change that sets `enable_firewall_protections = false` before destruction. Re-enable the setting for any subsequent deployment.

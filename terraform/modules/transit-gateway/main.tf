@@ -8,11 +8,6 @@ variable "description" {
   description = "Description applied to the TGW."
 }
 
-variable "spoke_vpc_keys" {
-  type        = list(string)
-  description = "Names of the spoke VPCs (used for tagging only)."
-}
-
 variable "tags" {
   type        = map(string)
   description = "Tags applied to all resources."

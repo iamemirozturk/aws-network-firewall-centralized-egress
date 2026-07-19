@@ -13,11 +13,6 @@ variable "firewall_subnet_ids" {
   description = "Map of AZ → firewall subnet ID."
 }
 
-variable "availability_zones" {
-  type        = list(string)
-  description = "AZs to deploy the firewall across."
-}
-
 variable "log_retention_days" {
   type        = number
   description = "CloudWatch retention for logs."
@@ -47,6 +42,12 @@ variable "tls_certificate_arn" {
   type        = string
   description = "ACM ARN of the CA certificate."
   sensitive   = true
+}
+
+variable "enable_protections" {
+  type        = bool
+  description = "Enable firewall deletion and configuration-change protections."
+  default     = true
 }
 
 variable "tags" {
@@ -133,6 +134,11 @@ resource "aws_networkfirewall_rule_group" "stateless_drops" {
   capacity = 100
   type     = "STATELESS"
 
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
+
   rule_group {
     rules_source {
       stateless_rules_and_custom_actions {
@@ -189,6 +195,11 @@ resource "aws_networkfirewall_rule_group" "domain_allowlist" {
   capacity = 200
   type     = "STATEFUL"
 
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
+
   rule_group {
     rule_variables {
       ip_sets {
@@ -224,6 +235,11 @@ resource "aws_networkfirewall_rule_group" "suricata_custom" {
   capacity = 500
   type     = "STATEFUL"
 
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
+
   rule_group {
     stateful_rule_options {
       rule_order = "STRICT_ORDER"
@@ -243,6 +259,11 @@ resource "aws_networkfirewall_rule_group" "suricata_custom" {
 
 resource "aws_networkfirewall_firewall_policy" "this" {
   name = "${var.name_prefix}-policy"
+
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
 
   firewall_policy {
     stateless_default_actions          = ["aws:forward_to_sfe"]
@@ -329,9 +350,14 @@ resource "aws_networkfirewall_firewall" "this" {
   vpc_id              = var.vpc_id
   firewall_policy_arn = aws_networkfirewall_firewall_policy.this.arn
 
-  delete_protection                 = false
-  firewall_policy_change_protection = false
-  subnet_change_protection          = false
+  encryption_configuration {
+    key_id = aws_kms_key.logs.arn
+    type   = "CUSTOMER_KMS"
+  }
+
+  delete_protection                 = var.enable_protections
+  firewall_policy_change_protection = var.enable_protections
+  subnet_change_protection          = var.enable_protections
 
   dynamic "subnet_mapping" {
     for_each = var.firewall_subnet_ids

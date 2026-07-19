@@ -127,6 +127,8 @@ terraform destroy
 
 Confirm the target AWS account and workspace before approving destruction.
 
+Firewall protections are enabled by default. Before cleanup, make a separate, explicitly reviewed configuration change setting `enable_firewall_protections = false`; do not automate that security-weakening step.
+
 ## Contributing and security
 
 Contributions are welcome through pull requests. See [`CONTRIBUTING.md`](CONTRIBUTING.md). Report security concerns according to [`SECURITY.md`](SECURITY.md).

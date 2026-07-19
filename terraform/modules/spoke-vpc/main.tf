@@ -14,6 +14,11 @@ variable "transit_gateway_id" {
   type = string
 }
 
+variable "log_retention_days" {
+  type        = number
+  description = "Retention period for VPC flow logs."
+}
+
 variable "tags" {
   type    = map(string)
   default = {}
@@ -32,12 +37,18 @@ resource "aws_vpc" "this" {
   tags = merge(var.tags, { Name = "${var.name_prefix}-vpc" })
 }
 
+resource "aws_default_security_group" "this" {
+  vpc_id = aws_vpc.this.id
+  tags   = merge(var.tags, { Name = "${var.name_prefix}-default-deny" })
+}
+
 resource "aws_subnet" "private" {
   for_each = { for idx, az in var.availability_zones : az => idx }
 
-  vpc_id            = aws_vpc.this.id
-  cidr_block        = local.private_cidrs[each.value]
-  availability_zone = each.key
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = local.private_cidrs[each.value]
+  availability_zone       = each.key
+  map_public_ip_on_launch = false
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-private-${each.key}"
@@ -48,9 +59,10 @@ resource "aws_subnet" "private" {
 resource "aws_subnet" "tgw_attach" {
   for_each = { for idx, az in var.availability_zones : az => idx }
 
-  vpc_id            = aws_vpc.this.id
-  cidr_block        = local.tgw_attach_cidrs[each.value]
-  availability_zone = each.key
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = local.tgw_attach_cidrs[each.value]
+  availability_zone       = each.key
+  map_public_ip_on_launch = false
 
   tags = merge(var.tags, {
     Name = "${var.name_prefix}-tgw-attach-${each.key}"
@@ -91,10 +103,49 @@ resource "aws_route" "private_default_to_tgw" {
   depends_on = [aws_ec2_transit_gateway_vpc_attachment.this]
 }
 
-# VPC Flow Logs — to CloudWatch
+# VPC Flow Logs — to KMS-encrypted CloudWatch Logs
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+resource "aws_kms_key" "flow_logs" {
+  description             = "KMS key for ${var.name_prefix} VPC flow logs"
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+  tags                    = merge(var.tags, { Name = "${var.name_prefix}-flow-logs" })
+}
+
+resource "aws_kms_key_policy" "flow_logs" {
+  key_id = aws_kms_key.flow_logs.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "EnableAccountAdministration"
+        Effect    = "Allow"
+        Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
+        Action    = "kms:*"
+        Resource  = "*"
+      },
+      {
+        Sid       = "AllowCloudWatchLogs"
+        Effect    = "Allow"
+        Principal = { Service = "logs.${data.aws_region.current.region}.amazonaws.com" }
+        Action    = ["kms:Encrypt*", "kms:Decrypt*", "kms:ReEncrypt*", "kms:GenerateDataKey*", "kms:Describe*"]
+        Resource  = "*"
+        Condition = {
+          ArnLike = {
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/vpc/flowlogs/${var.name_prefix}"
+          }
+        }
+      }
+    ]
+  })
+}
+
 resource "aws_cloudwatch_log_group" "flow" {
   name              = "/aws/vpc/flowlogs/${var.name_prefix}"
-  retention_in_days = 90
+  retention_in_days = var.log_retention_days
+  kms_key_id        = aws_kms_key.flow_logs.arn
   tags              = var.tags
 }
 
