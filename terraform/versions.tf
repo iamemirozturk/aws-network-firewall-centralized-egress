@@ -11,7 +11,7 @@ terraform {
   # Uncomment and configure for remote state with state locking.
   # backend "s3" {
   #   bucket         = "my-tf-state-bucket"
-  #   key            = "aws-centralized-egress-inspection/terraform.tfstate"
+  #   key            = "aws-network-firewall-centralized-egress/terraform.tfstate"
   #   region         = "eu-west-1"
   #   encrypt        = true
   #   dynamodb_table = "my-tf-state-lock"
