@@ -10,7 +10,7 @@ locals {
     Environment = var.environment
     Owner       = var.owner
     ManagedBy   = "terraform"
-    Repository  = "aws-centralized-egress-inspection"
+    Repository  = "aws-network-firewall-centralized-egress"
   }
 }
 
