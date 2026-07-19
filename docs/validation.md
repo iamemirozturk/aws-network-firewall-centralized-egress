@@ -52,6 +52,8 @@ terraform output nfw_flow_log_group
 
 Correlate timestamps, source address, destination, protocol, and action. Sanitize evidence before publication.
 
+For direct-IP TLS, confirm the established-flow default action blocks the session. Do not rely on an SNI signature because a connection without SNI may not create a `tls.sni` inspection buffer.
+
 ## Acceptance criteria
 
 Publish a validated version only when all mandatory tests pass, limitations are recorded, CI is green, and the tested commit/tag is identifiable.

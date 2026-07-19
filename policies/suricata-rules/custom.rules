@@ -26,8 +26,9 @@ drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Suspicious TLD .xyz"; t
 drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Suspicious TLD .tk"; tls.sni; content:".tk"; endswith; nocase; classtype:trojan-activity; sid:2000003; rev:1;)
 drop tls $HOME_NET any -> $EXTERNAL_NET any (msg:"EGRESS Suspicious TLD .click"; tls.sni; content:".click"; endswith; nocase; classtype:trojan-activity; sid:2000004; rev:1;)
 
-# Block direct-to-IP HTTPS (no SNI) — strong C2 indicator
-drop tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:"EGRESS HTTPS without SNI - possible C2"; tls.sni; content:!""; classtype:trojan-activity; sid:2000010; rev:1;)
+# Direct-IP TLS and sessions without an observable SNI are handled by the
+# policy's established-flow default drop. A tls.sni content rule cannot
+# reliably match when the SNI buffer does not exist.
 
 # -------------------------------------------------------------
 # 3. High-risk file downloads

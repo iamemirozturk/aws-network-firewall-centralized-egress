@@ -13,11 +13,11 @@ pre-commit install
 ## Before opening a PR
 
 1. **Run pre-commit hooks** — `pre-commit run --all-files`
-2. **Validate Terraform** — `terraform fmt -recursive && terraform validate`
+2. **Validate Terraform** — `terraform -chdir=terraform init -backend=false && terraform -chdir=terraform fmt -check -recursive && terraform -chdir=terraform validate`
 3. **Run security scans** locally:
    ```bash
    checkov -d terraform/
-   tfsec terraform/
+   trivy config terraform/
    ```
 4. **Update docs** — README and ARCHITECTURE if you change behavior
 5. **Don't commit `terraform.tfvars`, `*.tfstate`, or `.terraform/`** — covered by `.gitignore`

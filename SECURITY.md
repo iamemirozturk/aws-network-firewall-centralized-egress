@@ -2,39 +2,33 @@
 
 ## Scope
 
-This repository provides reference Terraform code and configurations for a centralized AWS egress inspection architecture. The code is intended for **educational and reference purposes**. Before deploying to production, conduct a security review against your organization's standards.
+This repository is a deployable reference architecture, not a production certification. Security depends on the selected domains, CIDRs, AWS account controls, Terraform state, deployment identity, and validation performed in the target environment.
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-If you discover a security issue in this code (insecure defaults, misconfiguration, exposed secrets, etc.), please **do not open a public GitHub issue**.
+Please do not disclose a suspected vulnerability in a public issue. Use GitHub's **Report a vulnerability** option on the repository Security page to submit a private report:
 
-Instead, please email the maintainer directly with:
+https://github.com/iamemirozturk/aws-network-firewall-centralized-egress/security/advisories/new
 
-- A clear description of the vulnerability
-- Steps to reproduce
-- The Terraform module and version affected
-- Suggested remediation, if you have one
+Include the affected file or module, impact, reproduction steps, and a suggested remediation when available. Response times are best-effort and are not a service-level commitment.
 
-You can expect:
-
-- Acknowledgement within **48 hours**
-- A status update within **7 days**
-- Public credit (or anonymous, if you prefer) once the issue is resolved
-
-## Security Posture of This Repository
+## Repository controls
 
 | Control | Status |
-|---------|--------|
-| Pre-commit hooks (gitleaks, terraform fmt/validate) | ✅ Configured |
-| CI security scanning (Checkov, tfsec) | ✅ Configured |
-| Dependabot for Terraform provider updates | ✅ Configured |
-| No hard-coded credentials | ✅ Verified |
-| Sensitive variables marked `sensitive = true` | ✅ Yes |
-| SSE-KMS on all data resources | ✅ Yes |
-| Least-privilege IAM | ✅ Yes |
+|---|---|
+| Terraform formatting and validation | Automated in GitHub Actions |
+| TFLint | Automated in GitHub Actions |
+| Checkov and Trivy IaC scanning | Automated in GitHub Actions |
+| Gitleaks secret scanning | Automated in GitHub Actions |
+| Dependabot for GitHub Actions and Terraform | Configured |
+| Network Firewall and CloudWatch Logs encryption | Customer-managed KMS keys in the reference code |
+| Firewall deletion and configuration protections | Enabled by default |
+| Runtime deployment validation | Required from the adopter; not claimed by this repository |
 
-## Known Limitations
+## Known limitations
 
-- The example configuration enables CloudWatch log export. Review log retention against your data classification policy.
-- TLS inspection is **disabled by default**. Enabling it requires careful CA-management decisions; see [`ARCHITECTURE.md`](ARCHITECTURE.md#tls-inspection-when-and-when-not).
-- Default Suricata rules are conservative; tune for your environment.
+- TLS inspection is disabled by default and requires certificate lifecycle, bypass, pinning, and mutual-TLS testing.
+- Domain allowlisting is not URL or payload inspection. Broad shared-service suffixes can create exfiltration paths.
+- Static analysis does not prove that routes, IAM permissions, KMS permissions, log delivery, Suricata behavior, or failure recovery work in a deployed account.
+- CloudWatch log groups in this reference are not a substitute for an immutable, cross-account security archive.
+- Review [`docs/limitations.md`](docs/limitations.md) and complete [`docs/validation.md`](docs/validation.md) before adoption.
