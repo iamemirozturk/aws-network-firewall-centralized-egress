@@ -241,6 +241,16 @@ resource "aws_networkfirewall_rule_group" "suricata_custom" {
   }
 
   rule_group {
+    rule_variables {
+      ip_sets {
+        key = "HOME_NET"
+
+        ip_set {
+          definition = var.home_net_cidrs
+        }
+      }
+    }
+
     stateful_rule_options {
       rule_order = "STRICT_ORDER"
     }

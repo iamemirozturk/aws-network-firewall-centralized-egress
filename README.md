@@ -81,6 +81,8 @@ terraform apply tfplan
 
 Read [`docs/deployment.md`](docs/deployment.md) before applying. Do not commit `terraform.tfvars`, state files, credentials, internal domains, or customer identifiers.
 
+The example allowlist intentionally uses narrow hostnames. Avoid broad shared-service suffixes such as `.amazonaws.com` unless every tenant-accessible destination under that suffix is an accepted exfiltration path.
+
 ## Validate before describing it as tested
 
 Run and record every test in [`docs/validation.md`](docs/validation.md). At minimum, prove:

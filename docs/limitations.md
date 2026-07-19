@@ -6,6 +6,7 @@
 - TLS SNI and HTTP Host controls do not inspect full URLs or encrypted payloads.
 - Encrypted ClientHello can reduce hostname visibility.
 - Direct-IP traffic and non-HTTP/TLS protocols need explicit rules.
+- Broad suffix allowlists for shared platforms can permit attacker-controlled tenant resources and create exfiltration paths. Prefer exact hostnames and document every wildcard.
 - UDP/443 is blocked. Compatible clients may fall back to TCP; others may fail.
 - TLS inspection is optional and unvalidated. It needs certificate distribution, rotation, revocation, bypass, pinning, and mTLS planning.
 - The design does not include automated endpoint/NAT failover or chaos testing.

@@ -23,11 +23,8 @@ enable_tls_inspection          = false
 tls_inspection_certificate_arn = ""
 
 allowed_egress_domains = [
-  ".amazonaws.com",
-  ".amazon.com",
-  ".github.com",
-  ".docker.io",
-  ".pypi.org",
-  ".pythonhosted.org",
-  ".ubuntu.com",
+  # Exact hostnames are safer than broad shared-service suffixes.
+  # Prefix a value with a dot only when every subdomain is intentionally trusted.
+  "aws.amazon.com",
+  "docs.aws.amazon.com",
 ]

@@ -83,12 +83,9 @@ variable "tls_inspection_certificate_arn" {
 variable "allowed_egress_domains" {
   description = "Domains permitted via TLS SNI / HTTP Host matching."
   type        = list(string)
-  default = [
-    ".amazonaws.com",
-    ".amazon.com",
-    ".github.com",
-    ".docker.io",
-    ".pypi.org",
-    ".pythonhosted.org",
-  ]
+
+  validation {
+    condition     = length(var.allowed_egress_domains) > 0
+    error_message = "Provide at least one explicitly approved egress domain."
+  }
 }
