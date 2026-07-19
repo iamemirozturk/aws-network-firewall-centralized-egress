@@ -35,20 +35,9 @@ Internet -> IGW -> NAT gateway -> NAT subnet -> same-AZ firewall endpoint
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  S["Private spoke workloads"] --> T["Transit Gateway"]
-  T --> A["TGW attachment subnet"]
-  A --> F["Same-AZ Network Firewall endpoint"]
-  F --> N["Same-AZ NAT Gateway"]
-  N --> I["Internet Gateway / Internet"]
-  I -. "return" .-> N
-  N -. "spoke CIDRs" .-> F
-  F -. "spoke CIDRs" .-> T
-  T -.-> S
-```
+![AWS Network Firewall centralized egress architecture](diagrams/architecture.png)
 
-The route-by-route explanation is in [`ARCHITECTURE.md`](ARCHITECTURE.md). A standalone diagram is in [`diagrams/architecture.md`](diagrams/architecture.md).
+The route-by-route explanation is available in [`ARCHITECTURE.md`](ARCHITECTURE.md). Additional diagram information is available in [`diagrams/architecture.md`](diagrams/architecture.md).
 
 ## Repository map
 
