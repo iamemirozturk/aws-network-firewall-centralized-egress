@@ -5,7 +5,7 @@ Contributions are welcome. This repo aims to be a high-quality reference for AWS
 ## Quick start
 
 ```bash
-git clone https://github.com/<you>/aws-network-firewall-centralized-egress.git
+git clone https://github.com/iamemirozturk/aws-network-firewall-centralized-egress.git
 cd aws-network-firewall-centralized-egress
 pre-commit install
 ```
